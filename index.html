@@ -10,7 +10,7 @@ function getURL() {
 </script>
      
 <button type="button" onclick="getURL();">Get Page URL</button>
-<button type="button" onclick="document.getElementById('full_uri')=window.location.href;">Set URl</button>
+<button type="button" onclick="document.getElementById('full_uri').innerHTML=window.location.href;">Set URl</button>
 <p id="full_uri"></p>
 
 <script>
@@ -21,7 +21,7 @@ function getToken() {
     return token;
 }
 </script>
-<button type="button" onclick="document.getElementById('token')=getToken();">Get token</button>
+<button type="button" onclick="document.getElementById('token').innerHTML=getToken();">Get token</button>
 <p id="token"></p>
 </body>
 </html>
