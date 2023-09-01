@@ -3,12 +3,25 @@
 <body>
 <h1>Hello World</h1>
 <p>I'm hosted with GitHub Pages.</p>
-    <script>
-    function getURL() {
-        alert("The URL of this page is: " + window.location.href);
-    }
-    </script>
+<script>
+function getURL() {
+    alert("The URL of this page is: " + window.location.href);
+}
+</script>
      
-    <button type="button" onclick="getURL();">Get Page URL</button>
+<button type="button" onclick="getURL();">Get Page URL</button>
+<button type = "button" onclick = "document.getElementById('full_uri') = window.location.href"> Set URl </button>
+<p id = "full_uri"></p>
+
+<script>
+function getToken() {
+    let uri = window.location.href;
+    let token = uri.split("?")[1].split("=")[1];
+    alert("The token is " + token);
+    return token;
+}
+</script>
+<button type = "button" onclick = "document.getElementById('token') = getToken()"> Get token </button>
+<p id = "token"></p>
 </body>
 </html>
