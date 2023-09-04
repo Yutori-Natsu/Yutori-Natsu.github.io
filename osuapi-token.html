@@ -11,7 +11,7 @@
     <script>
         let token = getToken();
         copyTokenToClipboard(token);
-        document.getElementById("text1").innerHTML = "Token获取成功！请复制token后私聊bot来绑定osu账号。";
+        document.getElementById("text1").innerHTML = "Token获取成功！请复制token后私聊bot\" ?osu bind <token> \"来绑定osu账号。";
 
         function getToken() {
             let uri = window.location.href;
