@@ -7,7 +7,7 @@
 
 <body>
     <p id="text1">获取token中...</p>
-    <button onclick="copyTokenToClipboard(token)">复制token</button>
+    <button onclick="copyTokenToClipboard(token)">复制绑定指令</button>
     <script>
         let token = getToken();
         copyTokenToClipboard(token);
@@ -20,7 +20,7 @@
             return token;
         }
         async function copyTokenToClipboard(token) {
-            await navigator.clipboard.writeText(token);
+            await navigator.clipboard.writeText("?osu bindtoken " + token);
         }
     </script>
 </body>
