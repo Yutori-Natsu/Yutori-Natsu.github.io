@@ -1,10 +1,10 @@
-avatar: https://kira.host/assets/Pictures/Others/20220922230447.jpg # 网站 Logo
+avatar: https://raw.githubusercontent.com/Yutori-Natsu/Yutori-Natsu.github.io/main/assets/ava.jpeg # 网站 Logo
 background: # 既是博客的背景，又是文章默认头图
-    path: https://kira.host/assets/Pictures/Others/-f0d5cc34c6e5aa7_compressed.jpg
-    width: 1280
-    height: 720
+    path: https://raw.githubusercontent.com/Yutori-Natsu/Yutori-Natsu.github.io/main/assets/bg.png
+    width: 3767
+    height: 2660
 favicon:
-    href: https://kira.host/assets/Pictures/Others/116359b4ccf19917.jpg # 网站图标
+    href: https://raw.githubusercontent.com/Yutori-Natsu/Yutori-Natsu.github.io/main/assets/fav.jpg # 网站图标
     type: image/png # 图标类型，可能的值有(image/png, image/vnd.microsoft.icon, image/x-icon, image/gif)
 
 # 附加图标库 使用说明：https://kira.host/hexo/config/icon.html
