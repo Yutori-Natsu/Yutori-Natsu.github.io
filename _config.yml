@@ -7,7 +7,7 @@ title: Hexo
 subtitle: ''
 description: ''
 keywords:
-author: John Doe
+author: Lily_White
 language: en
 timezone: ''
 
@@ -106,3 +106,19 @@ deploy:
 
 aplayer:
   asset_inject: false # 禁止 aplayer 注入资源
+
+math:
+  # Default (false) will load mathjax / katex script on demand.
+  # That is it only render those page which has `mathjax: true` in front-matter.
+  # If you set it to true, it will load mathjax / katex script EVERY PAGE.
+  every_page: true
+
+  mathjax:
+    enable: false
+    # Available values: none | ams | all
+    tags: none
+
+  katex:
+    enable: true
+    # See: https://github.com/KaTeX/KaTeX/tree/master/contrib/copy-tex
+    copy_tex: false

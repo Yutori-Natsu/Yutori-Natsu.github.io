@@ -127,3 +127,5 @@ friends:
 
 # 可复制的代码块
 copyableCodeblock: true
+# Enable Mathjax
+mathjax: true
