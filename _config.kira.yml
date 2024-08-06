@@ -16,8 +16,6 @@ cdn: # 这里可以修改站点使用的库的CDN
         js: https://unpkg.com/gitalk@latest/dist/gitalk.min.js
     giscus:
         js: https://giscus.app/client.js
-    katex:
-        css: https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.9.0/katex.min.css
 
 menu:
     回到首页:

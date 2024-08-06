@@ -96,16 +96,6 @@ ignore:
 
 # Extensions
 ## Plugins: https://hexo.io/plugins/
-markdown_it_plus:
-  highlight: true
-  html: true
-  xhtmlOut: true
-  breaks: true
-  langPrefix:
-  linkify: true
-  typographer:
-  quotes: “”‘’
-  pre_class: highlight
 ## Themes: https://hexo.io/themes/
 theme: kira
 
