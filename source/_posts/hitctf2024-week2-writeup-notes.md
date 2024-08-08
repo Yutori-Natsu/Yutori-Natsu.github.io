@@ -50,6 +50,14 @@ CE 动态分析。对于这种动态的窗口程序，使用 Cheat Engine 也可
 
 ### EasyHeap
 
+大坑！
+前置知识：堆上分配内存块结构、内存块管理方式
+内存块（chunk）主要包含 chunk header 和 user data，chunk header 中分别是 prev_size 和 size，user data 在该块闲置时开头为前向指针 fd 和后向指针 bk，结尾为按照块大小分类的前后向指针。
+管理方式：主要分为 small / large / unsorted bin，fastbin 和 tcache(libc > 2.26)。tcache 是 64 个按照 chunk 大小分别建立的栈，安全性检查最少；fastbin 是优先级低于 tcache 的 chunk 栈，而剩余的 bin 是根据 chunk 大小和释放时机分别归类的三个 chunk 队列。
+本题为 libc 2.27，故先申请若干个（此处为 10 个）chunk 和一个大 chunkS，然后依次释放前 8 个 chunk。此时 chunk 1 到 chunk 7 均位于 tcache，同时由于 chunk 8 大小较小，它会暂时位于 fast bin。此时再释放 chunkS，由于某些原因，在 chunkS 与 top chunk 合并后，chunk 8 会被置于 unsorted bin。由于 unsorted bin 的特性，此时 chunk 8 的 fd 指针会指向 unsorted bin 的初始节点，通过 Use After Free 可以得到一个和 main_arena 结构具有固定偏移的地址，当中保存的是 top chunk 的地址，然后是 unsorted bin 初始节点的前向与后向指针，然后是 small / large bin 等。此处使用了一个投机取巧的方法：程序的 ASLR 范围似乎不仅限于后 12 位，在这里达到了 20 位，且 libc 的基址与前文中 UAF 泄露的地址具有固定偏移量 `0x3ebca0`，故此处较为轻松地得到了 libc 的基址。
+接下来的部分是基于 tcache 的 alloc to any address。释放一个 tcache 的 chunk 会导致 tcache 的栈顶指向该 chunk，从 tcache 中取出 chunk 进行分配时则会将该 chunk 的 fd 指针赋予栈顶。此处通过 UAF 对已经释放的 chunk 进行覆写，可以得到两个分别指向 `__malloc_hook` 和 `__realloc_hook` 的 chunk，通过 realloc 调整栈帧后由 onegadget 远程执行 shell。
+观察内存，发现 `__realloc_hook` 处已有数据（貌似是特供版 libc 自带的默认值？），而 `__malloc_hook` 内没有，所以选择先构造指向 `__malloc_hook` 的 chunk，再构造指向 `__realloc_hook` 的 chunk，这样可以避免脏数据导致的一系列问题（又是一个以后再填的坑）。此处先将 chunk 7 的 fd 覆写为 `__malloc_hook`，然后调用两次 malloc，第一次malloc 会分配到 chunk 7，并导致 tcache 的栈顶指向 `__malloc_hook`，第二次 malloc 就能分配到指向 `__malloc_hook` 的 chunk 了。接下来 tcache 内还有 5 个已释放的 chunk，但栈顶已经指向了 NULL，所以此处需要额外释放别的 chunk。此处我选择的是依次释放 chunk 6 和 chunk 5，完成后栈顶指向 chunk 5，同样的覆写分配流程后就能得到指向 `__realloc_hook` 的 chunk，最后分别改写两处 hook 就能完成攻击流程。
+
 ## Crypto
 
 ### photoenc
@@ -70,6 +78,7 @@ m[i] = c[i] * adjK * |K|^-1
 ### easybag
 
 子集和问题，flag 被 AES 加密，而 AES 的密钥由背包方法加密。将密钥 key 的比特流看做一个 `1x64` 的行向量，生成 64 个随机数作为公钥向量与 key 向量求点积后的结果作为密文。用空间换时间可以有一个时空 `O(2^n/2)` 的暴力方法。
+通过 LLL 算法可以做到高效求解子集和问题？ TBD
 
 ### broadcast
 
