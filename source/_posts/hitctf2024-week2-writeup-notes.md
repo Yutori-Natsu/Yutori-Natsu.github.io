@@ -44,6 +44,36 @@ CE 动态分析。对于这种动态的窗口程序，使用 Cheat Engine 也可
 
 ### babyssrf
 
+    PHP 提供了多种内置类来处理文件操作。以下是一些常用的文件处理相关的内置类：
+
+    1. **SplFileObject**：用于读取和写入文件。它提供了多种方法来处理文件内容，例如按行读取、写入 CSV 文件等²。
+    2. **SplFileInfo**：用于获取文件的详细信息，如文件名、路径、大小、权限等²。
+    3. **DirectoryIterator**：用于遍历目录中的文件和子目录¹。
+    4. **FilesystemIterator**：扩展了 DirectoryIterator，提供了更多的遍历选项和过滤功能¹。
+    5. **RecursiveDirectoryIterator**：用于递归遍历目录及其子目录¹。
+
+    源: 与 Copilot 的对话， 2024/8/10
+    (1) php文件处理类中关于SplFileObject与SplFileInfo的具体详解 .... https://www.cnblogs.com/setevn/p/8821959.html.
+    (2) php原生类的总结_php 原生类-CSDN博客. https://blog.csdn.net/unexpectedthing/article/details/121780909.
+    (3) php有哪些对象 - 叮当号. https://www.dingdanghao.com/article/704244.html.
+    (4) PHP 常见内置类浅析-腾讯云开发者社区-腾讯云. https://cloud.tencent.com/developer/article/2288295.
+
+此处使用 SplFileObject 进行反序列化攻击。
+具体来讲，index.php 的 curl 可以用于 ssrf，而 Message 类的 `__tostring()` 方法内有一句 `$con = new $this->contentType($this->content);`，假如此处的 contentType 是其它的类型便可用于攻击。此处传入一个 SplFileObject 类，其构造方法和 `__tostring()` 方法如下所示：
+
+```php
+public __construct(
+    string $filename,
+    string $mode = "r",
+    bool $useIncludePath = false,
+    ?resource $context = null
+)
+public __toString(): string // Returns the current line as a string.
+```
+
+在此处传入一个 `new SplFileObject('/flag')`，其在下文中的 `$res .= "<div class='ui message'>" . $con . "</div>";` 中便会将 `/flag` 文件第一行输出。
+SSRF：此处只禁用了 `file:///` 协议，使用 `gopher://` 协议可以经过服务器向内网发送 TCP 数据流，由于 HTTP 在层级上位于 TCP 之上，因此可以通过 `gopher://` 协议通过 curl _exec 让服务器向内网发送伪造的 HTTP 请求。具体实现时，由于发往服务器的报文会被 URLdecode 一次，而从服务器向内网还要再 URLdecode 一次，所以向服务器发送报文时，伪造的 HTTP 请求需要进行**两次** URLencode.
+
 ### tp
 
 ## Pwn
