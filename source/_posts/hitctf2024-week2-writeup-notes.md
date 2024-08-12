@@ -1,6 +1,6 @@
 ---
 title: hitctf2024-week2-writeup&notes
-date: 2024-08-06 18:08:12
+date: 2024-08-10 18:08:12
 categories:
     - writeup
 tags:
