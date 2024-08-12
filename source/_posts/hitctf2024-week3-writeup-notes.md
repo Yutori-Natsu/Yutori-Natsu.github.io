@@ -37,4 +37,10 @@ o.__init__: 给出 o 的初始化函数，一般用于 o.__init__.__globals__ �
 
 ### obfsudan
 
+真得动态调试而不是不调试
+输入一个长 81 的字符串，给定若干组约束条件求解
+`pip install z3-solver`
+
 ### Patience
+
+断点测试发现关键过程为蒙特卡洛计算圆周率值，patch 后执行获得 flag.
