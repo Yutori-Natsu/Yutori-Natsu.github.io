@@ -55,14 +55,18 @@ o.__init__: 给出 o 的初始化函数，一般用于 o.__init__.__globals__ �
 House of Orange (top chunk leak) + House of Force (top chunk Anywhere Allocate) + tcache
 由于没有 free 没有 UAF 的途径，需要通过 House of Orange 创造 free chunk 机会。
 
+```plain
     机制：当一次 malloc 在所有 bin 中都找不到可用 chunk，此时会尝试在 top chunk 中分配。
     1. 假如此时的 top chunk size 大于需要分配的空间，直接进行分配
     2. 假如此时的 top chunk size 小于需要分配的空间，这个 top chunk 会直接被 free 后进入 unsorted bin，由系统新分配一个 top chunk
+```
 
 House of Orange 在利用时对 top chunk 的 size 有对齐要求，因此将 size 的高位写 0 后 malloc 一个比较大的 chunk 就可以创造一个 unsorted bin chunk. 由 unsorted bin 中第一个 chunk 的特性，可以从中取得 `main_arena+96` 的地址，获取 libc 和各种 offset.
 House of Force: 将 top chunk size 覆写为 -1，由于 size_t 是无符号数，可以 bypass 大部分后续的 malloc 参数检查。
 
-    `main_arena+96` 处的结构依次是：top chunk address, unsorted bin->fd/bk, small bin, large bin
+```plain
+    main_arena+96 处的结构依次是：top chunk address, unsorted bin->fd/bk, small bin, large bin
+```
 
 在覆写 size 后，试图 malloc 一个大小为负数的 chunk 能够成功，并且能够减小 top chunk address. 运行环境的 libc 版本下有 tcache 实现，所以如果通过 House of Orange 创造了多个 unsorted/small bin chunk，经过一次 malloc 分配其中的 chunk 会导致剩下的 chunk 进入 tcache. 由于 tcache 位于所有堆空间的最底端（一个 size 为 `0x250` 的 chunk），可以通过 House of Force 分配一个可以直接控制 tcache 地址表的 chunk. 
 因此，通过 House of Orange 创造两个 unsorted bin chunk，然后通过 House of Force 获取一个可以控制 tcache 地址表的 chunk，在后续的一次 malloc 将剩余 chunk 写入 tcache 后，可以将原本指向这个剩余 chunk 的 tcache 地址表改为指向 __realloc_hook 的地址，第二次 malloc 获取对 __realloc_hook 和 __malloc_hook 的控制权。
