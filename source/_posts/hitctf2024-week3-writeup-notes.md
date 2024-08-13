@@ -64,6 +64,6 @@ House of Force: 将 top chunk size 覆写为 -1，由于 size_t 是无符号数�
 
     `main_arena+96` 处的结构依次是：top chunk address, unsorted bin->fd/bk, small bin, large bin
 
-在覆写 size 后，试图 malloc 一个大小为负数的 chunk 能够成功，并且能够减小 top chunk address. 运行环境的 libc 版本下有 tcache 实现，所以如果通过 House of Orange 创造了多个 unsorted/small bin chunk，经过一次 malloc 分配其中的 chunk 会导致剩下的 chunk 进入 tcache. 由于 tcache 位于所有堆空间的最底端，可以通过 House of Force 分配一个可以直接控制 tcache 地址表的 chunk. 
+在覆写 size 后，试图 malloc 一个大小为负数的 chunk 能够成功，并且能够减小 top chunk address. 运行环境的 libc 版本下有 tcache 实现，所以如果通过 House of Orange 创造了多个 unsorted/small bin chunk，经过一次 malloc 分配其中的 chunk 会导致剩下的 chunk 进入 tcache. 由于 tcache 位于所有堆空间的最底端（一个 size 为 `0x250` 的 chunk），可以通过 House of Force 分配一个可以直接控制 tcache 地址表的 chunk. 
 因此，通过 House of Orange 创造两个 unsorted bin chunk，然后通过 House of Force 获取一个可以控制 tcache 地址表的 chunk，在后续的一次 malloc 将剩余 chunk 写入 tcache 后，可以将原本指向这个剩余 chunk 的 tcache 地址表改为指向 __realloc_hook 的地址，第二次 malloc 获取对 __realloc_hook 和 __malloc_hook 的控制权。
 具体实现时（可能）需要将两个 unsorted bin chunk 的 size 覆写为更小的值（如 `0x20`），为 House of Orange 和 House of Force 的 padding chunk 留出正常 malloc 的空间。
