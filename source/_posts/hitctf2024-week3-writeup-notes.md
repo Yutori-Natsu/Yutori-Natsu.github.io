@@ -57,8 +57,9 @@ House of Orange (top chunk leak) + House of Force (top chunk Anywhere Allocate) 
 
 ```plain
     机制：当一次 malloc 在所有 bin 中都找不到可用 chunk，此时会尝试在 top chunk 中分配。
-    1. 假如此时的 top chunk size 大于需要分配的空间，直接进行分配
-    2. 假如此时的 top chunk size 小于需要分配的空间，这个 top chunk 会直接被 free 后进入 unsorted bin，由系统新分配一个 top chunk
+        1. 假如此时的 top chunk size 大于需要分配的空间，直接进行分配
+        2. 假如此时的 top chunk size 小于需要分配的空间，这个 top chunk 会直接被 free 后
+           进入 unsorted bin，由系统新分配一个 top chunk
 ```
 
 House of Orange 在利用时对 top chunk 的 size 有对齐要求，因此将 size 的高位写 0 后 malloc 一个比较大的 chunk 就可以创造一个 unsorted bin chunk. 由 unsorted bin 中第一个 chunk 的特性，可以从中取得 `main_arena+96` 的地址，获取 libc 和各种 offset.
