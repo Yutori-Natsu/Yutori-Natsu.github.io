@@ -35,12 +35,19 @@ o.__init__: 给出 o 的初始化函数，一般用于 o.__init__.__globals__ �
 
 ### whereThel1b
 
+瞎试能发现输出和 base64 非常像，此处还增加了根据长度决定的盐，每次爆破 3 字节得到 flag.
+
 ### obfsudan
 
 真得动态调试而不是不调试
 输入一个长 81 的字符串，给定若干组约束条件求解
 `pip install z3-solver`
+记得 `import` 什么不要和文件本身重名了
 
 ### Patience
 
 断点测试发现关键过程为蒙特卡洛计算圆周率值，patch 后执行获得 flag.
+
+## Pwn
+
+### TopChunkMaster
