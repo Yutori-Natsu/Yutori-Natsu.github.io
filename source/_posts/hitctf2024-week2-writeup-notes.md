@@ -8,7 +8,7 @@ tags:
     - writeup
     - 笔记
 katex: true
-cover: ../images/wp2.jpeg
+cover: https://yutori-natsu.github.io/images/wp2.jpeg
 ---
 ## Reverse
 

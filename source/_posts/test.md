@@ -5,7 +5,7 @@ categories:
     - test
 tags:
     - test_tag_please_ignore
-cover: ../images/img20220613230321.png
+cover: https://yutori-natsu.github.io/images/img20220613230321.png
 ---
 
 test me !

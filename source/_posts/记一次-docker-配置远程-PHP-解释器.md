@@ -6,7 +6,7 @@ categories:
 tags:
     - docker
     - php
-cover: ../images/119880489_p1.png
+cover: https://yutori-natsu.github.io/images/119880489_p1.png
 ---
 
 [参考](https://pikaball.cc/posts/php%E5%AE%B9%E5%99%A8%E8%BF%9C%E7%A8%8B%E8%B0%83%E8%AF%95%E6%8C%87%E5%8C%97/)
