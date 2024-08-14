@@ -76,7 +76,7 @@ SSRF：此处只禁用了 `file:///` 协议，使用 `gopher://` 协议可以经
 
 ### tp
 
-docker 配置远程 PHP 解释器（见文章）
+docker 配置远程 PHP 解释器（见[文章](/2024/08/14/记一次-docker-配置远程-PHP-解释器/)）
 
 ## Pwn
 
