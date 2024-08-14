@@ -39,7 +39,7 @@ EXPOSE 9003
 ```
 
 需要 Dockerfile 文件同目录下有镜像源列表 debian.sources，建立镜像 `docker build -t rmphp .`
-docker 运行命令 `docker run -d -p 2222:22 -p 8000:80 -p 9003:9003 rmphp`
+docker 运行命令 `docker run -d -p 2222:22 -p 8000:8000 -p 9003:9003 rmphp`
 docker 后台更改 root 密码 `passwd`
 安装 xdebug，运行如下脚本：
 
