@@ -76,7 +76,7 @@ xdebug.remote_port = 9003
 ### PHPStorm 部分
 
 IDE 需要自行寻找学习版下载。
-Settings -> PHP -> CLI 解释器，添加一个新的 SSH 配置，容器 IP 为 `127.0.0.1`（如果在上文的 `docker run` 中添加 IP 映射可能可以使用不同的 IP 地址？），端口为 `2222`。解释器中 PHP 可执行文件路径为 `/usr/local/bin/php`.
+Settings -> PHP -> CLI 解释器，添加一个新的 SSH 配置，容器 IP 为 `127.0.0.1`（如果在上文的 `docker run` 中添加 IP 映射可能可以使用不同的 IP 地址？），端口为 `2222`，用户名 `sshuser`，密码为 Dockerfile 中的配置（此处为 `password`）。解释器中 PHP 可执行文件路径为 `/usr/local/bin/php`.
 Settings -> PHP - 服务器，添加新服务器，地址为 `127.0.0.1:8000`，调试器为 XDebug，路径映射本机的源文件夹到服务器上的 `/think`.（如果配置容器时容器内的项目文件夹有不同名称可能需要相应修改）
 Settings -> PHP - 调试，Xdebug 调试端口 9003
 Settings -> PHP - 调试 -> DBGp 代理，IDE 键 `PHPSTORM`，主机端口 `127.0.0.1:9003`.
