@@ -38,8 +38,8 @@ EXPOSE 9003
 # RUN rm -f ./phpstorm_xdebug.zip
 ```
 
-需要 Dockerfile 文件同目录下有镜像源列表 debian.sources. 
-docker 运行命令 `docker build -d -p 2222:22 -p 8000:80 -p 9003:9003 .` 
+需要 Dockerfile 文件同目录下有镜像源列表 debian.sources，建立镜像 `docker build -t rmphp .`
+docker 运行命令 `docker run -d -p 2222:22 -p 8000:80 -p 9003:9003 rmphp` 
 docker 后台更改 root 密码
 
 ```bash
