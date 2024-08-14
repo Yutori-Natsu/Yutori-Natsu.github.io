@@ -7,6 +7,7 @@ tags:
     - ctf
     - writeup
     - 笔记
+cover: ../images/wp3.jpeg
 ---
 
 ## Misc
