@@ -39,7 +39,7 @@ EXPOSE 9003
 ```
 
 需要 Dockerfile 文件同目录下有镜像源列表 debian.sources，建立镜像 `docker build -t rmphp .`
-docker 运行命令 `docker run -d -p 2222:22 -p 8000:8000 -p 9003:9003 rmphp`
+docker 运行命令 `docker run -d -p 2222:22 -p 8000:8000 -p 9003:9003  --mount type=bind,source=<src>,target=/think rmphp`，此处的 src 需要为绝对路径，保证每次对项目的修改能够被直接映射到容器的项目文件内。
 docker 后台更改 root 密码 `passwd`
 安装 xdebug，运行如下脚本：
 
@@ -71,8 +71,6 @@ xdebug.remote_enable=1
 xdebug.remote_port = 9003
 ```
 
-`docker cp ./src <container-name>:/` 将项目文件夹复制进容器，`mv ./src ./think` 重命名文件夹
-
 ### PHPStorm 部分
 
 IDE 需要自行寻找学习版下载。
@@ -82,3 +80,5 @@ Settings -> PHP - 调试，Xdebug 调试端口 9003
 Settings -> PHP - 调试 -> DBGp 代理，IDE 键 `PHPSTORM`，主机端口 `127.0.0.1:9003`.
 项目设置运行实参为 `php`，这样每次运行时会在远程服务器执行命令 `/usr/local/bin/php /think/think run`，点击执行观察是否成功执行。
 点击调试，此时可能会报错端口被占用，打开 Settings -> PHP - 调试，将 Xdebug 的调试端口改为新增的端口，修改容器的 `xdebug.ini`，将 `xdebug.remote_port` 和 `xdebug.client_port` 都改为新端口，查看能否成功提醒断点。
+
+配置完成后记得使用 `docker commit <container-name>` 保存该映像

