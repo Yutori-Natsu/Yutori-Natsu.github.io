@@ -36,11 +36,11 @@ NepCTF 的时候遇到了通过 il2cpp 生成的 Unity 应用，此时不能直�
 
 推式子
 
-![a](./lattice1-1.png)
+![a](https://yutori-natsu.github.io/2024/08/27/hitctf2024-week4-writeup-notes/lattice1-1.png)
 
 因此构造如下的格矩阵
 
-![a](./lattice1-2.png)
+![a](https://yutori-natsu.github.io/2024/08/27/hitctf2024-week4-writeup-notes/lattice1-2.png)
 
 令 `A = 1, B = -1`，规约后可以得到对应的 `(m, C)`
 
