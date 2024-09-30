@@ -83,7 +83,7 @@ print(-res[0,0])
 
 ![a](https://yutori-natsu.github.io/2024/08/27/hitctf2024-week4-writeup-notes/lattice3-2.png)
 
-根据构造，由于明文为 ASCII，其大小约为 8 bit，而 k 为 线性组合之和除以 p 的商，大小一般在 8 + 5 = 13 bit，左边格的决定式如下，大约为 35 bit，故可以直接进行规约，结果的第一行即为所求答案。
+根据构造，由于明文为 ASCII，其大小约为 8 bit，而 k 为 线性组合之和除以 p 的商，大小一般在 8 + 5 = 13 bit，左边格的决定式如下，大约为 35 bit（在这组数据下大约为 34.67 bit），故可以直接进行规约，结果的第一行即为所求答案。
 
 ![a](https://yutori-natsu.github.io/2024/08/27/hitctf2024-week4-writeup-notes/lattice3-3.png)
 
