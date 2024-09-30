@@ -48,7 +48,107 @@ Trivia: 此处的 `C` 可以用于联立解出先前的 `r`
 
 ### Lattice-2
 
+一个很巧妙的轮换构造，三个参数也是这个结构下所需要的
+
+`d' * e' = 1 + kabcdef`，根据 n1, n2, n3 的特点可以转化为三个形如 `d' * e' + An[i] = B` 的等式，构造格求解得到 `d'`，由 `d' * e' = 1 + kabcdef = 1 (mod phi(n1))` 完成 RSA 解密
+
+```python
+c = ...
+e = ...
+n1 = ...
+n2 = ...
+n3 = ...
+B = 2**(4*-180)
+L = matrix([
+    [1,B*e,B*e,B*e],
+    [0,B*n1,0,0],
+    [0,0,B*n2,0],
+    [0,0,0,B*n3]
+])
+res = L.LLL()
+print(-res[0,0])
+```
+
+精彩之处在于此处对于大小为 k 的格，其在 Hermit 定理中的决定值大约在 `(B + 0x600) * (k-1) / k` bit，而目标向量的大小在 `max(0x210, 0x510 + B)` bit，此时 k = 3 是存在能够用于配平 Hermit 定理的 B 的最小值。
+
 ### Lattice-3
+
+究极暴力之我寻思应该能行之力
+
+可以将加密过程改写如下：`C = M * T mod p`，进而通过 seed 得到 16 个已知的 `C[i]`。因此尝试根据如下恒等式构造格：
+
+![a](https://yutori-natsu.github.io/2024/08/27/hitctf2024-week4-writeup-notes/lattice3-1.png)
+
+其中 T 为根据已有的 C 截取的系数矩阵。会发现这个格无论如何缩放都无法满足 Hermit 定理的要求，故进一步将格改为如下的格：
+
+![a](https://yutori-natsu.github.io/2024/08/27/hitctf2024-week4-writeup-notes/lattice3-2.png)
+
+根据构造，由于明文为 ASCII，其大小约为 8 bit，而 k 为 线性组合之和除以 p 的商，大小一般在 8 + 5 = 13 bit，左边格的决定式如下，大约为 35 bit，故可以直接进行规约，结果的第一行即为所求答案。
+
+![a](https://yutori-natsu.github.io/2024/08/27/hitctf2024-week4-writeup-notes/lattice3-3.png)
+
+```python
+import random
+p = 319091779869475374911695228423324530997
+random.seed(0xcafebabe)
+
+vec_zero = [0] * 32
+vec_temp = [i for i in range(32)]
+vec_co = []
+vec_inv = []
+
+for i in range(32):
+    vec_co.append(vec_zero.copy())
+    vec_inv.append(vec_zero.copy())
+    vec_co[i][i] = 1
+
+for _ in range(100000):
+    x = random.randint(0, 31)
+    y = random.randint(0, 31)
+    for i in range(32):
+        vec_co[x][i] += vec_co[y][i] # construct T
+        vec_co[x][i] %= p
+
+r = random.sample(vec_temp, 16)
+sample = [246415812587807955719465288044201719150, 
+          25823418688747119552867703202077954742, 
+          273975173174872667670349301602909925041, 
+          74819122900362508301812012519072346089, 
+          307025913230811949362183799087621378605, 
+          111756507561379169428585335542438410208, 
+          31014035928821611988689266381114681052, 
+          158160784389144362309073339510431518439, 
+          189909043056878233059107613293511107477, 
+          272974060341572186018916149825627429126, 
+          182856029478269321082003604921397866989, 
+          259589248922429513367122588418587486935, 
+          92189739655863216285857342016549552902, 
+          123449160885669287608440168940251472197, 
+          242452497155050148384372661588046551814, 
+          112859548971181667550169123431601320680]
+
+extra_size = 2 * len(r)
+final_size = 32 + extra_size
+vec_final = [0] * final_size
+mat_lll = [vec_final.copy() for i in range(final_size)]
+
+for i in range(0, 32): # set M[[_, 0, ?],[0, ?, ?],[0, 0, ?]] = E[32*32]
+    mat_lll[i][i] = 1
+for i in range(32, 32 + len(r)): # set M[[E, 0, ?],[0, _, ?],[0, 0, ?]] = E[16*16]
+    mat_lll[i][i] = 1
+for i in range(32 + len(r), final_size): # set M[[E, 0, ?],[0, E, ?],[0, 0, _]] = C
+    mat_lll[i][i] = sample[i - 32 - len(r)]
+for i in range(32 + len(r), final_size):
+    for j in range(0, 32): # set M[[E, 0, _],[0, E, _],[0, 0, C]] = T, P
+        mat_lll[j][i] = vec_co[r[i - 32 - len(r)]][j]
+    mat_lll[i - len(r)][i] = p
+
+M = matrix(mat_lll) # [[E, 0, T],[0, E, P],[0, 0, C]]
+res = M.LLL()
+print(res)
+for i in range(32):
+    print(chr(-res[0][i]), end='') # flag{sucH_a_s1mp1e_L@t111cCeeEE}
+```
 
 ## Pwn
 
