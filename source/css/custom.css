@@ -1,0 +1,15 @@
+/**
+ * 仓库级自定义样式（会原样复制到 /css/custom.css，由 scripts/inject-custom-css.js 注入到每个页面的 </head> 前）
+ *
+ * 行内代码（`xxx`）的底纹。
+ * 主题默认值来自 node_modules/hexo-theme-kira/source/css/article.styl:87 的
+ *   background-color: $krlbgc1  ->  rgba($color1, 0.25)
+ * 此处只把不透明度从 0.25 降到 0.1，其余（文字色、圆角、内边距、字体）继续沿用主题默认。
+ *
+ * 注意：颜色值 rgb(49,174,255) 对应 _config.kira.yml 里 color.first 的 r/g/b，
+ * 改了那边的主题色，这里需要同步改，否则行内代码底纹与主题色会脱钩。
+ */
+
+article code {
+	background-color: rgba(49, 174, 255, 0.1);
+}

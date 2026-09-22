@@ -521,7 +521,7 @@ static inline void validate_creds(const struct cred *cred)
 | +0x200-0x217 | — | 伪造的 `tsec` |
 | +0x218 | `sk_prot_creator = &netlink_proto` | — |
 | +0x240 | `sk_peer_pid = 0` | — |
-| +0x248 | `sk_peer_cred == 0 \|\| sk_peer_cred == &selinux_state` | — |
+| +0x248 | `sk_peer_cred == &selinux_state` | — |
 | +0x280 | `sk_security = &payload+0x2a0` | — |
 | +0x288 | `sk_cgrp_data = 2` | — |
 | +0x290 | `sk_memcg = 0` | — |
