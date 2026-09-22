@@ -9,6 +9,7 @@ tags:
     - Android
     - Xiaomi
     - RealWorld
+cover: https://yutori-natsu.github.io/images/HRsKQNDbQAAAPeX.jpg
 ---
 
 
